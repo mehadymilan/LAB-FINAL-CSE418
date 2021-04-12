@@ -1,0 +1,326 @@
+                                                      Lab final semester spring 2021
+                                                      Course code:CSE418
+                                                      Section: PC-A
+                                                      ID: 181-15-1736
+
+
+
+                                                      #ANS.TO THE QUESTION NO:05
+
+
+
+
+Use test2;
+
+CREATE TABLE login (
+id int(9) NOT NULL auto_increment,
+name varchar(100) NOT NULL,
+email varchar(100) NOT NULL,
+username varchar(100) NOT NULL,
+password varchar(100) NOT NULL,
+PRIMARY KEY (id)
+) ENGINE=InnoDB;
+
+CREATE TABLE products (
+id int(11) NOT NULL auto_increment,
+name varchar(100) NOT NULL,
+qty int(5) NOT NULL,
+price decimal(10,2) NOT NULL,
+login_id int(11) NOT NULL,
+PRIMARY KEY (id),
+CONSTRAINT FK_products_1
+FOREIGN KEY (login_id) REFERENCES login(id)
+ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB;
+Connection.php
+
+$databaseHost = 'localhost';
+$databaseName = 'test2';
+$databaseUsername = 'root';
+$databasePassword = 'root';
+ 
+$mysqli = mysqli_connect($databaseHost, $databaseUsername, $databasePassword, $databaseName); 
+?>
+Index.php
+
+<?php session_start(); ?>
+<html>
+<head>
+    <title>Homepage</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+ 
+<body>
+    <div id="header">
+        Welcome to my page!
+    </div>
+    <?php
+    if(isset($_SESSION['valid'])) {            
+        include("connection.php");                    
+        $result = mysqli_query($mysqli, "SELECT * FROM login");
+    ?>                
+        Welcome <?php echo $_SESSION['name'] ?> ! <a href='logout.php'>Logout</a><br/>
+        <br/>
+        <a href='view.php'>View and Add Products</a>
+        <br/><br/>
+    <?php    
+    } else {
+        echo "You must be logged in to view this page.<br/><br/>";
+        echo "<a href='login.php'>Login</a> | <a href='register.php'>Register</a>";
+    }
+    ?>
+    <div id="footer">
+        Created by <a href="http://blog.chapagain.com.np" title="Mukesh Chapagain">Mukesh Chapagain</a>
+    </div>
+</body>
+</html>
+style.css
+
+body {
+    margin: auto;
+    height: 500px;
+    padding: 20px;
+}
+ 
+#header {
+    width: 700px;
+    color: maroon;
+    font-size: 32px;
+    padding: 10px 10px 10px 0px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid green;
+}
+ 
+#footer {
+    border-top: 1px solid green;
+    margin-top: 20px;
+    color: #336699;
+    padding-top: 10px;    
+}
+
+register.php
+
+<html>
+<head>
+    <title>Register</title>
+</head>
+ 
+<body>
+    <a href="index.php">Home</a> <br />
+    <?php
+    include("connection.php");
+ 
+    if(isset($_POST['submit'])) {
+        $name = $_POST['name'];
+        $email = $_POST['email'];
+        $user = $_POST['username'];
+        $pass = $_POST['password'];
+ 
+        if($user == "" || $pass == "" || $name == "" || $email == "") {
+            echo "All fields should be filled. Either one or many fields are empty.";
+            echo "<br/>";
+            echo "<a href='register.php'>Go back</a>";
+        } else {
+            mysqli_query($mysqli, "INSERT INTO login(name, email, username, password) VALUES('$name', '$email', '$user', md5('$pass'))")
+            or die("Could not execute the insert query.");
+            
+            echo "Registration successfully";
+            echo "<br/>";
+            echo "<a href='login.php'>Login</a>";
+        }
+    } else {
+?>
+        <p><font size="+2">Register</font></p>
+        <form name="form1" method="post" action="">
+            <table width="75%" border="0">
+                <tr> 
+                    <td width="10%">Full Name</td>
+                    <td><input type="text" name="name"></td>
+                </tr>
+                <tr> 
+                    <td>Email</td>
+                    <td><input type="text" name="email"></td>
+                </tr>            
+                <tr> 
+                    <td>Username</td>
+                    <td><input type="text" name="username"></td>
+                </tr>
+                <tr> 
+                    <td>Password</td>
+                    <td><input type="password" name="password"></td>
+                </tr>
+                <tr> 
+                    <td>&nbsp;</td>
+                    <td><input type="submit" name="submit" value="Submit"></td>
+                </tr>
+            </table>
+        </form>
+    <?php
+    }
+    ?>
+</body>
+</html>
+edit.php
+
+<?php session_start(); ?>
+ 
+<?php
+if(!isset($_SESSION['valid'])) {
+    header('Location: login.php');
+}
+?>
+ 
+<?php
+// including the database connection file
+include_once("connection.php");
+ 
+if(isset($_POST['update']))
+{    
+    $id = $_POST['id'];
+    
+    $name = $_POST['name'];
+    $qty = $_POST['qty'];
+    $price = $_POST['price'];    
+    
+    // checking empty fields
+    if(empty($name) || empty($qty) || empty($price)) {                
+        if(empty($name)) {
+            echo "<font color='red'>Name field is empty.</font><br/>";
+        }
+        
+        if(empty($qty)) {
+            echo "<font color='red'>Quantity field is empty.</font><br/>";
+        }
+        
+        if(empty($price)) {
+            echo "<font color='red'>Price field is empty.</font><br/>";
+        }        
+    } else {    
+        //updating the table
+        $result = mysqli_query($mysqli, "UPDATE products SET name='$name', qty='$qty', price='$price' WHERE id=$id");
+        
+        //redirectig to the display page. In our case, it is view.php
+        header("Location: view.php");
+    }
+}
+?>
+<?php
+//getting id from url
+$id = $_GET['id'];
+ 
+//selecting data associated with this particular id
+$result = mysqli_query($mysqli, "SELECT * FROM products WHERE id=$id");
+ 
+while($res = mysqli_fetch_array($result))
+{
+    $name = $res['name'];
+    $qty = $res['qty'];
+    $price = $res['price'];
+}
+?>
+<html>
+<head>    
+    <title>Edit Data</title>
+</head>
+ 
+<body>
+    <a href="index.php">Home</a> | <a href="view.php">View Products</a> | <a href="logout.php">Logout</a>
+    <br/><br/>
+    
+    <form name="form1" method="post" action="edit.php">
+        <table border="0">
+            <tr> 
+                <td>Name</td>
+                <td><input type="text" name="name" value="<?php echo $name;?>"></td>
+            </tr>
+            <tr> 
+                <td>Quantity</td>
+                <td><input type="text" name="qty" value="<?php echo $qty;?>"></td>
+            </tr>
+            <tr> 
+                <td>Price</td>
+                <td><input type="text" name="price" value="<?php echo $price;?>"></td>
+            </tr>
+            <tr>
+                <td><input type="hidden" name="id" value=<?php echo $_GET['id'];?>></td>
+                <td><input type="submit" name="update" value="Update"></td>
+            </tr>
+        </table>
+    </form>
+</body>
+</html
+
+                                       #ANS.TO THE QUESTION NO: 03
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+    <title>Bootstrap Theme Company Page</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet" type="text/css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+    
+        </div>
+        <div class="collapse navbar-collapse" id="myNavbar">
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="#">Home</a></li>
+                <li><a href="#">About</a></li>
+                <li><a href="#">Teacher Info</a></li>
+                <li><a href="#">Notice Board</a></li>
+                <li><a href="#">Contact us</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+
+<footer class="container-fluid text-center">
+    <p>Made By  &#173 Mehady Hasan Milan </p>
+</footer>
+
+
+</body>
+
+</html>
+
+
+                                       #ANS.TO THE QUESTION NO:10
+
+
+
+<?php
+$color = array('white', 'green', 'red');
+foreach ($color as $c)
+{
+echo "$c, ";
+}
+sort($color);
+echo "<ul>";
+foreach ($color as $y)
+{
+echo "<li>$y</li>";
+}
+echo "</ul>";
+?>
+
